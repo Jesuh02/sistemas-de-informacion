@@ -1,0 +1,86 @@
+<svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="800" height="600" fill="#1a202c"/>
+  
+  <!-- Title -->
+  <text x="400" y="60" text-anchor="middle" fill="#4facfe" font-size="32" font-weight="bold" font-family="Inter">CICLO DE VIDA</text>
+  
+  <!-- Central Circle -->
+  <circle cx="400" cy="320" r="80" fill="none" stroke="#4facfe" stroke-width="2"/>
+  
+  <!-- Main Circle -->
+  <circle cx="400" cy="320" r="200" fill="none" stroke="#4facfe" stroke-width="3"/>
+  
+  <!-- Phase circles and labels -->
+  <!-- Planification -->
+  <circle cx="400" cy="120" r="40" fill="#2d3748" stroke="#4facfe" stroke-width="2"/>
+  <g transform="translate(400, 115)">
+    <rect x="-15" y="-10" width="30" height="20" fill="#4facfe" rx="3"/>
+    <path d="M-8,-2 L-3,3 L8,-8" stroke="white" stroke-width="2" fill="none"/>
+  </g>
+  <text x="400" y="180" text-anchor="middle" fill="white" font-size="16" font-weight="bold">Planificación</text>
+  
+  <!-- Analysis -->
+  <circle cx="540" cy="180" r="40" fill="#2d3748" stroke="#4facfe" stroke-width="2"/>
+  <g transform="translate(540, 180)">
+    <circle r="12" fill="none" stroke="#4facfe" stroke-width="2"/>
+    <circle r="6" fill="#4facfe"/>
+  </g>
+  <text x="540" y="240" text-anchor="middle" fill="white" font-size="16" font-weight="bold">Análisis</text>
+  
+  <!-- Design -->
+  <circle cx="600" cy="320" r="40" fill="#2d3748" stroke="#4facfe" stroke-width="2"/>
+  <g transform="translate(600, 320)">
+    <rect x="-10" y="-8" width="20" height="16" fill="#4facfe" rx="2"/>
+    <text x="0" y="2" text-anchor="middle" fill="white" font-size="10">&lt;/&gt;</text>
+  </g>
+  <text x="600" y="380" text-anchor="middle" fill="white" font-size="16" font-weight="bold">Diseño</text>
+  
+  <!-- Development -->
+  <circle cx="540" cy="460" r="40" fill="#2d3748" stroke="#4facfe" stroke-width="2"/>
+  <g transform="translate(540, 460)">
+    <rect x="-8" y="-6" width="16" height="12" fill="none" stroke="#4facfe" stroke-width="2"/>
+    <path d="M-4,-2 L0,2 L4,-2" stroke="#4facfe" stroke-width="2" fill="none"/>
+  </g>
+  <text x="480" y="520" text-anchor="middle" fill="white" font-size="14" font-weight="bold">Desarrollo o</text>
+  <text x="480" y="535" text-anchor="middle" fill="white" font-size="14" font-weight="bold">Construcción</text>
+  
+  <!-- Testing -->
+  <circle cx="260" cy="460" r="40" fill="#2d3748" stroke="#4facfe" stroke-width="2"/>
+  <g transform="translate(260, 460)">
+    <path d="M-8,-8 L8,8 M-8,8 L8,-8" stroke="#4facfe" stroke-width="2"/>
+    <circle r="10" fill="none" stroke="#4facfe" stroke-width="2"/>
+  </g>
+  <text x="260" y="520" text-anchor="middle" fill="white" font-size="16" font-weight="bold">Pruebas</text>
+  
+  <!-- Implementation -->
+  <circle cx="200" cy="320" r="40" fill="#2d3748" stroke="#4facfe" stroke-width="2"/>
+  <g transform="translate(200, 320)">
+    <path d="M-8,0 L0,-8 L8,0 L0,8 Z" fill="#4facfe"/>
+  </g>
+  <text x="200" y="280" text-anchor="middle" fill="white" font-size="14" font-weight="bold">Implantación</text>
+  
+  <!-- Maintenance -->
+  <circle cx="260" cy="180" r="40" fill="#2d3748" stroke="#4facfe" stroke-width="2"/>
+  <g transform="translate(260, 180)">
+    <rect x="-8" y="-8" width="16" height="16" fill="none" stroke="#4facfe" stroke-width="2"/>
+    <path d="M-4,-4 L4,4 M-4,4 L4,-4" stroke="#4facfe" stroke-width="2"/>
+  </g>
+  <text x="260" y="140" text-anchor="middle" fill="white" font-size="16" font-weight="bold">Mantenimiento</text>
+  
+  <!-- Arrows -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#4facfe"/>
+    </marker>
+  </defs>
+  
+  <!-- Arrow paths around the circle -->
+  <path d="M 440 140 Q 520 120 520 160" fill="none" stroke="#4facfe" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <path d="M 560 200 Q 600 240 580 280" fill="none" stroke="#4facfe" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <path d="M 580 360 Q 580 420 520 440" fill="none" stroke="#4facfe" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <path d="M 500 460 Q 400 500 300 460" fill="none" stroke="#4facfe" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <path d="M 240 440 Q 180 400 180 360" fill="none" stroke="#4facfe" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <path d="M 200 280 Q 200 220 240 200" fill="none" stroke="#4facfe" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <path d="M 280 160 Q 320 120 360 140" fill="none" stroke="#4facfe" stroke-width="2" marker-end="url(#arrowhead)"/>
+</svg>

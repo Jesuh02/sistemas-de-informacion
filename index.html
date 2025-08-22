@@ -1,0 +1,2210 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistemas de Información - Arquitectura y Ciclo de Vida</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    
+    <style>
+        /* Estilos para diagramas interactivos */
+        .diagram-node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .diagram-node:hover {
+            transform: scale(1.1);
+        }
+
+        .node-circle {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .node-circle.w-16 {
+            width: 64px;
+            height: 64px;
+        }
+
+        .node-label {
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            background: rgba(0,0,0,0.7);
+            padding: 4px 8px;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        .connection-lines line {
+            stroke-dasharray: 5,5;
+            animation: dashFlow 2s linear infinite;
+        }
+
+        @keyframes dashFlow {
+            to {
+                stroke-dashoffset: -10;
+            }
+        }
+
+        .event-particle {
+            pointer-events: none;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        .architecture-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0.7;
+        }
+
+        .architecture-btn.active,
+        .architecture-btn:hover {
+            opacity: 1;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .microservices-diagram,
+        .event-driven-diagram,
+        .cqrs-diagram {
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animaciones personalizadas */
+        @keyframes nodeAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes connectionDraw {
+            from {
+                stroke-dasharray: 1000;
+                stroke-dashoffset: 1000;
+            }
+            to {
+                stroke-dasharray: 1000;
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes eventFlow {
+            0% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+        }
+
+        /* Responsive para diagramas */
+        @media (max-width: 768px) {
+            .diagram-node {
+                position: relative !important;
+                margin: 10px;
+                display: inline-flex;
+            }
+            
+            .microservices-diagram,
+            .event-driven-diagram,
+            .cqrs-diagram {
+                height: auto !important;
+                padding: 20px;
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 15px;
+            }
+            
+            .connection-lines {
+                display: none;
+            }
+        }
+
+        /* Efectos de brillo para nodos activos */
+        .node-active {
+            box-shadow: 0 0 20px currentColor !important;
+            animation: pulse 1s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            from {
+                box-shadow: 0 0 20px currentColor;
+            }
+            to {
+                box-shadow: 0 0 30px currentColor, 0 0 40px currentColor;
+            }
+        }
+
+        /* Estilos para diagramas específicos */
+        .architecture-diagram {
+            transition: all 0.5s ease;
+        }
+
+        .architecture-diagram.hidden {
+            display: none;
+        }
+
+        .layer {
+            transition: all 0.3s ease;
+        }
+
+        .layer:hover {
+            transform: translateX(10px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        /* Animaciones para conexiones MVC */
+        .mvc-connections line {
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: drawLine 2s ease-in-out forwards;
+            filter: drop-shadow(0 0 4px rgba(255,255,255,0.15));
+            pointer-events: none;
+        }
+
+        @keyframes drawLine {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        /* Estilos para características de arquitecturas */
+        .architecture-diagram .bg-gray-700 {
+            transition: all 0.3s ease;
+        }
+
+        .architecture-diagram .bg-gray-700:hover {
+            background-color: rgb(55 65 81);
+            transform: translateY(-2px);
+        }
+
+        /* Efectos de hover para nodos específicos */
+        .microservices-container .diagram-node:hover .node-circle {
+            transform: scale(1.1);
+        }
+
+        .mvc-controller:hover .node-circle,
+        .mvc-model:hover .node-circle,
+        .mvc-view:hover .node-circle {
+            box-shadow: 0 0 15px currentColor;
+        }
+
+    /* Labels flotantes del flujo MVC */
+    #mvc-diagram .flow-label {
+        opacity: 0.95;
+        transition: transform .2s ease, opacity .2s ease;
+        position: relative;
+        z-index: 3;
+        display: inline-block;
+        white-space: nowrap;
+        max-width: max-content;
+        pointer-events: none;
+    }
+    #mvc-diagram .flow-label:hover { transform: scale(1.05); opacity: 1; }
+
+        /* Animaciones para serverless */
+        @keyframes serverlessGlow {
+            0%, 100% {
+                box-shadow: 0 0 5px currentColor;
+            }
+            50% {
+                box-shadow: 0 0 20px currentColor, 0 0 30px currentColor;
+            }
+        }
+
+        /* Partículas de comunicación */
+        .communication-particle {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: linear-gradient(45deg, #fbbf24, #f59e0b);
+            border-radius: 50%;
+            box-shadow: 0 0 10px #fbbf24;
+        }
+
+    /* CQRS diagram fixes: evitar overlays y asegurar capas correctas */
+    #cqrs-diagram { position: relative; }
+    #cqrs-diagram .connection-lines { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+    #cqrs-diagram .diagram-node { z-index: 2; background: transparent !important; box-shadow: none; padding: 0; }
+    #cqrs-diagram .diagram-node .node-label { background: rgba(0,0,0,0.7); }
+    #cqrs-diagram .node-circle { box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-ring': 'pulse-ring 2s ease-in-out infinite',
+                        'glow': 'glow 2s ease-in-out infinite alternate',
+                        'slide-up': 'slideUp 0.8s ease-out',
+                        'parallax': 'parallax 20s linear infinite',
+                        'matrix': 'matrix 15s linear infinite',
+                        'cyber-pulse': 'cyber-pulse 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+                            '25%': { transform: 'translateY(-20px) rotate(1deg)' },
+                            '50%': { transform: 'translateY(-10px) rotate(-1deg)' },
+                            '75%': { transform: 'translateY(-15px) rotate(0.5deg)' },
+                        },
+                        'pulse-ring': {
+                            '0%': { transform: 'scale(0.8)', opacity: '0.8' },
+                            '50%': { transform: 'scale(1.2)', opacity: '0.3' },
+                            '100%': { transform: 'scale(0.8)', opacity: '0.8' },
+                        },
+                        glow: {
+                            '0%': { 'box-shadow': '0 0 20px rgba(79, 172, 254, 0.5)' },
+                            '100%': { 'box-shadow': '0 0 40px rgba(79, 172, 254, 0.8)' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(100px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        parallax: {
+                            '0%': { transform: 'translateX(-100%)' },
+                            '100%': { transform: 'translateX(100%)' },
+                        },
+                        matrix: {
+                            '0%': { transform: 'translateY(-100vh)' },
+                            '100%': { transform: 'translateY(100vh)' },
+                        },
+                        'cyber-pulse': {
+                            '0%, 100%': { 'box-shadow': '0 0 0 0 rgba(79, 172, 254, 0.7)' },
+                            '50%': { 'box-shadow': '0 0 0 20px rgba(79, 172, 254, 0)' },
+                        },
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .cyber-grid {
+            background-image: 
+                linear-gradient(rgba(79, 172, 254, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(79, 172, 254, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: cyber-grid 20s linear infinite;
+        }
+        
+        @keyframes cyber-grid {
+            0% { background-position: 0 0, 0 0; }
+            100% { background-position: 50px 50px, 50px 50px; }
+        }
+        
+        .matrix-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .matrix-column {
+            position: absolute;
+            top: -100%;
+            width: 2px;
+            height: 100vh;
+            background: linear-gradient(transparent, rgba(79, 172, 254, 0.8), transparent);
+            animation: matrix 15s linear infinite;
+        }
+        
+        .gta-parallax {
+            transform-style: preserve-3d;
+            perspective: 1000px;
+        }
+        
+        .neural-network {
+            background: radial-gradient(circle at 20% 80%, rgba(79, 172, 254, 0.2) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.2) 0%, transparent 50%),
+                        radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.2) 0%, transparent 50%);
+        }
+        
+        .hologram-effect {
+            background: linear-gradient(45deg, transparent 30%, rgba(79, 172, 254, 0.1) 50%, transparent 70%);
+            background-size: 20px 20px;
+            animation: hologram 3s linear infinite;
+        }
+        
+        @keyframes hologram {
+            0% { background-position: 0 0; }
+            100% { background-position: 20px 20px; }
+        }
+    </style>
+</head>
+<body class="font-inter bg-gray-900 text-white overflow-x-hidden">
+    <!-- Matrix Background Effect -->
+    <div class="matrix-bg">
+        <div class="matrix-column" style="left: 10%; animation-delay: 0s;"></div>
+        <div class="matrix-column" style="left: 20%; animation-delay: 2s;"></div>
+        <div class="matrix-column" style="left: 30%; animation-delay: 4s;"></div>
+        <div class="matrix-column" style="left: 40%; animation-delay: 1s;"></div>
+        <div class="matrix-column" style="left: 50%; animation-delay: 3s;"></div>
+        <div class="matrix-column" style="left: 60%; animation-delay: 5s;"></div>
+        <div class="matrix-column" style="left: 70%; animation-delay: 2s;"></div>
+        <div class="matrix-column" style="left: 80%; animation-delay: 4s;"></div>
+        <div class="matrix-column" style="left: 90%; animation-delay: 1s;"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 right-0 bg-black bg-opacity-80 backdrop-blur-lg z-50 border-b border-blue-500 border-opacity-30">
+        <nav class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center animate-cyber-pulse">
+                        <i class="fas fa-network-wired text-xl text-white"></i>
+                    </div>
+                    <span class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                        SysArchTech
+                    </span>
+                </div>
+                <ul class="hidden md:flex space-x-8 text-sm font-medium">
+                    <li><a href="#inicio" class="hover:text-blue-400 transition-colors duration-300 relative group">
+                        Inicio
+                        <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full"></span>
+                    </a></li>
+                    <li><a href="#arquitectura" class="hover:text-blue-400 transition-colors duration-300 relative group">
+                        Arquitectura
+                        <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full"></span>
+                    </a></li>
+                    <li><a href="#metodologias" class="hover:text-blue-400 transition-colors duration-300 relative group">
+                        Metodologías
+                        <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full"></span>
+                    </a></li>
+                    <li><a href="#ciclo-vida" class="hover:text-blue-400 transition-colors duration-300 relative group">
+                        Ciclo de Vida
+                        <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full"></span>
+                    </a></li>
+                    <li><a href="#tecnologias" class="hover:text-blue-400 transition-colors duration-300 relative group">
+                        Tecnologías
+                        <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-blue-400 transition-all duration-300 group-hover:w-full"></span>
+                    </a></li>
+                </ul>
+                <button class="md:hidden text-white">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="inicio" class="relative min-h-screen flex items-center justify-center cyber-grid neural-network overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 opacity-90"></div>
+        
+        <!-- Floating geometric shapes -->
+        <div class="absolute inset-0 z-10">
+            <div class="absolute top-20 left-10 w-32 h-32 bg-blue-500 bg-opacity-20 rounded-full animate-float blur-sm"></div>
+            <div class="absolute top-40 right-20 w-24 h-24 bg-purple-500 bg-opacity-30 rotate-45 animate-float" style="animation-delay: 2s;"></div>
+            <div class="absolute bottom-40 left-20 w-40 h-40 bg-green-500 bg-opacity-20 rounded-lg animate-float" style="animation-delay: 4s;"></div>
+            <div class="absolute bottom-20 right-10 w-28 h-28 bg-pink-500 bg-opacity-25 rounded-full animate-float" style="animation-delay: 6s;"></div>
+        </div>
+
+        <div class="relative z-20 max-w-7xl mx-auto px-6 lg:px-8 grid lg:grid-cols-2 gap-16 items-center">
+            <div class="space-y-8" data-aos="fade-right" data-aos-duration="1000">
+                <div class="space-y-4">
+                    <h1 class="text-5xl lg:text-7xl font-black leading-tight">
+                        <span class="block text-white">Arquitectura y Diseño</span>
+                        <span class="block bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+                            de Sistemas
+                        </span>
+                        <span class="block text-white">de Información</span>
+                    </h1>
+                    <p class="text-xl lg:text-2xl text-gray-300 leading-relaxed">
+                        La estructura que integra los diferentes componentes que conforman un sistema de información 
+                        y que permiten que el sistema cumpla con sus funciones de manera eficiente.
+                    </p>
+                </div>
+                
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <button class="group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 px-8 py-4 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-2xl">
+                        <span class="flex items-center justify-center space-x-2">
+                            <i class="fas fa-rocket"></i>
+                            <span>Explorar Arquitectura</span>
+                        </span>
+                    </button>
+                    <button class="group border-2 border-blue-500 hover:bg-blue-500 px-8 py-4 rounded-lg font-semibold transition-all duration-300 transform hover:scale-105">
+                        <span class="flex items-center justify-center space-x-2">
+                            <i class="fas fa-play"></i>
+                            <span>Demo Interactivo</span>
+                        </span>
+                    </button>
+                </div>
+
+                <!-- Tech Stats -->
+                <div class="grid grid-cols-3 gap-6 pt-8 border-t border-gray-700">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-blue-400">6</div>
+                        <div class="text-sm text-gray-400">Componentes Principales</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-purple-400">8</div>
+                        <div class="text-sm text-gray-400">Fases del Ciclo</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-pink-400">100%</div>
+                        <div class="text-sm text-gray-400">Funcionalidad</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3D Floating Components -->
+            <div class="relative h-96 lg:h-[600px]" data-aos="fade-left" data-aos-duration="1000">
+                <div class="absolute inset-0 gta-parallax">
+                    <!-- Hardware Component -->
+                    <div class="absolute top-10 left-10 bg-gradient-to-br from-gray-800 to-gray-900 border border-blue-500 rounded-xl p-6 transform rotate-3 animate-float hover:scale-110 transition-all duration-300 cursor-pointer group">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center group-hover:animate-spin">
+                                <i class="fas fa-server text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-blue-400">Hardware</h3>
+                                <p class="text-xs text-gray-400">Infraestructura</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 space-y-1">
+                            <div class="h-1 bg-gray-700 rounded">
+                                <div class="h-1 bg-blue-500 rounded w-3/4 animate-pulse"></div>
+                            </div>
+                            <div class="h-1 bg-gray-700 rounded">
+                                <div class="h-1 bg-blue-500 rounded w-1/2 animate-pulse" style="animation-delay: 0.5s;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Software Component -->
+                    <div class="absolute top-20 right-20 bg-gradient-to-br from-gray-800 to-gray-900 border border-purple-500 rounded-xl p-6 transform -rotate-2 animate-float hover:scale-110 transition-all duration-300 cursor-pointer group" style="animation-delay: 1s;">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center group-hover:animate-spin">
+                                <i class="fas fa-code text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-purple-400">Software</h3>
+                                <p class="text-xs text-gray-400">Aplicaciones</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 space-y-1">
+                            <div class="h-1 bg-gray-700 rounded">
+                                <div class="h-1 bg-purple-500 rounded w-4/5 animate-pulse"></div>
+                            </div>
+                            <div class="h-1 bg-gray-700 rounded">
+                                <div class="h-1 bg-purple-500 rounded w-3/5 animate-pulse" style="animation-delay: 0.3s;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Database Component -->
+                    <div class="absolute bottom-32 left-16 bg-gradient-to-br from-gray-800 to-gray-900 border border-green-500 rounded-xl p-6 transform rotate-1 animate-float hover:scale-110 transition-all duration-300 cursor-pointer group" style="animation-delay: 2s;">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center group-hover:animate-spin">
+                                <i class="fas fa-database text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-green-400">Datos</h3>
+                                <p class="text-xs text-gray-400">Base de Datos</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 space-y-1">
+                            <div class="h-1 bg-gray-700 rounded">
+                                <div class="h-1 bg-green-500 rounded w-2/3 animate-pulse"></div>
+                            </div>
+                            <div class="h-1 bg-gray-700 rounded">
+                                <div class="h-1 bg-green-500 rounded w-4/5 animate-pulse" style="animation-delay: 0.7s;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Network Component -->
+                    <div class="absolute bottom-10 right-10 bg-gradient-to-br from-gray-800 to-gray-900 border border-pink-500 rounded-xl p-6 transform -rotate-1 animate-float hover:scale-110 transition-all duration-300 cursor-pointer group" style="animation-delay: 3s;">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-12 h-12 bg-pink-500 rounded-lg flex items-center justify-center group-hover:animate-spin">
+                                <i class="fas fa-network-wired text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-pink-400">Redes</h3>
+                                <p class="text-xs text-gray-400">Comunicación</p>
+                            </div>
+                        </div>
+                        <div class="mt-3 space-y-1">
+                            <div class="h-1 bg-gray-700 rounded">
+                                <div class="h-1 bg-pink-500 rounded w-3/4 animate-pulse"></div>
+                            </div>
+                            <div class="h-1 bg-gray-700 rounded">
+                                <div class="h-1 bg-pink-500 rounded w-1/2 animate-pulse" style="animation-delay: 0.4s;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Central Processing Unit -->
+                    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center animate-cyber-pulse">
+                        <i class="fas fa-microchip text-4xl text-white animate-spin" style="animation-duration: 10s;"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scrolling indicator -->
+        <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 animate-bounce">
+            <div class="w-6 h-10 border-2 border-white rounded-full flex justify-center">
+                <div class="w-1 h-3 bg-white rounded-full mt-2 animate-pulse"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Arquitectura Section -->
+    <section id="arquitectura" class="relative py-32 bg-gradient-to-b from-gray-900 to-black">
+        <div class="absolute inset-0 hologram-effect opacity-10"></div>
+        <div class="max-w-7xl mx-auto px-6 lg:px-8">
+            <div class="text-center mb-20" data-aos="fade-up">
+                <h2 class="text-5xl lg:text-6xl font-black mb-6">
+                    <span class="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                        Arquitectura y Diseño de un Sistema de Información
+                    </span>
+                </h2>
+                <p class="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+                    La arquitectura de un sistema de información se refiere a la estructura que integra 
+                    los diferentes componentes que lo conforman y que permiten que el sistema cumpla con sus funciones.
+                </p>
+            </div>
+
+            <!-- Componentes Principales - Interactive Graphic -->
+            <div class="bg-gray-800 rounded-2xl p-8 border border-gray-700 mb-16" data-aos="zoom-in">
+                <h3 class="text-3xl font-bold text-center text-white mb-12">Componentes Principales del Sistema</h3>
+                
+                <!-- Central Hub with Components -->
+                <div class="relative h-96 flex items-center justify-center">
+                    <!-- Central Circle -->
+                    <div class="absolute w-32 h-32 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center animate-cyber-pulse">
+                        <i class="fas fa-sitemap text-4xl text-white"></i>
+                    </div>
+                    
+                    <!-- Component 1: Hardware -->
+                    <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-8 group cursor-pointer">
+                        <div class="w-24 h-24 bg-blue-500 rounded-full flex items-center justify-center hover:scale-110 transition-all duration-300 animate-float">
+                            <i class="fas fa-server text-2xl text-white"></i>
+                        </div>
+                        <div class="mt-2 text-center">
+                            <h4 class="text-sm font-bold text-blue-400">Hardware</h4>
+                            <p class="text-xs text-gray-400">Equipos físicos</p>
+                        </div>
+                        <!-- Tooltip -->
+                        <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                            Servidores, computadores, dispositivos móviles, redes
+                        </div>
+                    </div>
+
+                    <!-- Component 2: Software -->
+                    <div class="absolute top-12 right-8 group cursor-pointer">
+                        <div class="w-24 h-24 bg-purple-500 rounded-full flex items-center justify-center hover:scale-110 transition-all duration-300 animate-float" style="animation-delay: 1s;">
+                            <i class="fas fa-code text-2xl text-white"></i>
+                        </div>
+                        <div class="mt-2 text-center">
+                            <h4 class="text-sm font-bold text-purple-400">Software</h4>
+                            <p class="text-xs text-gray-400">Programas y aplicaciones</p>
+                        </div>
+                        <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                            Programas y aplicaciones que procesan la información
+                        </div>
+                    </div>
+
+                    <!-- Component 3: Datos -->
+                    <div class="absolute bottom-12 right-8 group cursor-pointer">
+                        <div class="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center hover:scale-110 transition-all duration-300 animate-float" style="animation-delay: 2s;">
+                            <i class="fas fa-database text-2xl text-white"></i>
+                        </div>
+                        <div class="mt-2 text-center">
+                            <h4 class="text-sm font-bold text-green-400">Datos</h4>
+                            <p class="text-xs text-gray-400">Materia prima</p>
+                        </div>
+                        <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                            Organizados en bases de datos para almacenamiento y consulta
+                        </div>
+                    </div>
+
+                    <!-- Component 4: Personas -->
+                    <div class="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-8 group cursor-pointer">
+                        <div class="w-24 h-24 bg-orange-500 rounded-full flex items-center justify-center hover:scale-110 transition-all duration-300 animate-float" style="animation-delay: 3s;">
+                            <i class="fas fa-users text-2xl text-white"></i>
+                        </div>
+                        <div class="mt-2 text-center">
+                            <h4 class="text-sm font-bold text-orange-400">Personas</h4>
+                            <p class="text-xs text-gray-400">Usuarios del sistema</p>
+                        </div>
+                        <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                            Administradores, empleados, clientes que interactúan
+                        </div>
+                    </div>
+
+                    <!-- Component 5: Procesos -->
+                    <div class="absolute bottom-12 left-8 group cursor-pointer">
+                        <div class="w-24 h-24 bg-red-500 rounded-full flex items-center justify-center hover:scale-110 transition-all duration-300 animate-float" style="animation-delay: 4s;">
+                            <i class="fas fa-cogs text-2xl text-white"></i>
+                        </div>
+                        <div class="mt-2 text-center">
+                            <h4 class="text-sm font-bold text-red-400">Procesos</h4>
+                            <p class="text-xs text-gray-400">Actividades y reglas</p>
+                        </div>
+                        <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                            Cómo se recopila, almacena, procesa y distribuye información
+                        </div>
+                    </div>
+
+                    <!-- Component 6: Redes -->
+                    <div class="absolute top-12 left-8 group cursor-pointer">
+                        <div class="w-24 h-24 bg-pink-500 rounded-full flex items-center justify-center hover:scale-110 transition-all duration-300 animate-float" style="animation-delay: 5s;">
+                            <i class="fas fa-network-wired text-2xl text-white"></i>
+                        </div>
+                        <div class="mt-2 text-center">
+                            <h4 class="text-sm font-bold text-pink-400">Redes</h4>
+                            <p class="text-xs text-gray-400">Comunicación</p>
+                        </div>
+                        <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap">
+                            Flujo de información dentro y fuera de la organización
+                        </div>
+                    </div>
+
+                    <!-- Connection Lines -->
+                    <svg class="absolute inset-0 w-full h-full pointer-events-none">
+                        <line x1="50%" y1="20%" x2="50%" y2="40%" stroke="rgba(59, 130, 246, 0.3)" stroke-width="2"/>
+                        <line x1="65%" y1="30%" x2="55%" y2="45%" stroke="rgba(139, 92, 246, 0.3)" stroke-width="2"/>
+                        <line x1="65%" y1="70%" x2="55%" y2="55%" stroke="rgba(34, 197, 94, 0.3)" stroke-width="2"/>
+                        <line x1="50%" y1="80%" x2="50%" y2="60%" stroke="rgba(249, 115, 22, 0.3)" stroke-width="2"/>
+                        <line x1="35%" y1="70%" x2="45%" y2="55%" stroke="rgba(239, 68, 68, 0.3)" stroke-width="2"/>
+                        <line x1="35%" y1="30%" x2="45%" y2="45%" stroke="rgba(236, 72, 153, 0.3)" stroke-width="2"/>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Detailed Components Grid -->
+            <div class="grid lg:grid-cols-3 gap-8 mb-16">
+                <div class="bg-gray-800 rounded-2xl p-8 border border-blue-500 hover:border-blue-400 transition-all duration-300" data-aos="fade-up" data-aos-delay="100">
+                    <div class="flex items-center mb-6">
+                        <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-server text-2xl text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-blue-400">Hardware</h3>
+                            <p class="text-gray-400">Equipos físicos necesarios</p>
+                        </div>
+                    </div>
+                    <ul class="space-y-3 text-gray-300">
+                        <li class="flex items-center"><i class="fas fa-check text-blue-400 mr-3"></i>Servidores</li>
+                        <li class="flex items-center"><i class="fas fa-check text-blue-400 mr-3"></i>Computadores</li>
+                        <li class="flex items-center"><i class="fas fa-check text-blue-400 mr-3"></i>Dispositivos móviles</li>
+                        <li class="flex items-center"><i class="fas fa-check text-blue-400 mr-3"></i>Redes y equipos de comunicación</li>
+                    </ul>
+                </div>
+
+                <div class="bg-gray-800 rounded-2xl p-8 border border-purple-500 hover:border-purple-400 transition-all duration-300" data-aos="fade-up" data-aos-delay="200">
+                    <div class="flex items-center mb-6">
+                        <div class="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-code text-2xl text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-purple-400">Software</h3>
+                            <p class="text-gray-400">Programas y aplicaciones</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-300">
+                        Los programas y aplicaciones que procesan la información, incluyendo sistemas operativos, 
+                        software de aplicación y herramientas de desarrollo.
+                    </p>
+                </div>
+
+                <div class="bg-gray-800 rounded-2xl p-8 border border-green-500 hover:border-green-400 transition-all duration-300" data-aos="fade-up" data-aos-delay="300">
+                    <div class="flex items-center mb-6">
+                        <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-database text-2xl text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-green-400">Datos</h3>
+                            <p class="text-gray-400">La materia prima del sistema</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-300">
+                        Organizados en bases de datos que permiten el almacenamiento y consulta eficiente 
+                        de la información empresarial.
+                    </p>
+                </div>
+
+                <div class="bg-gray-800 rounded-2xl p-8 border border-orange-500 hover:border-orange-400 transition-all duration-300" data-aos="fade-up" data-aos-delay="400">
+                    <div class="flex items-center mb-6">
+                        <div class="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-users text-2xl text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-orange-400">Personas</h3>
+                            <p class="text-gray-400">Usuarios del sistema</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-300">
+                        Los usuarios que interactúan con el sistema: administradores, empleados, 
+                        clientes y todos los interesados en el funcionamiento del sistema.
+                    </p>
+                </div>
+
+                <div class="bg-gray-800 rounded-2xl p-8 border border-red-500 hover:border-red-400 transition-all duration-300" data-aos="fade-up" data-aos-delay="500">
+                    <div class="flex items-center mb-6">
+                        <div class="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-cogs text-2xl text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-red-400">Procesos</h3>
+                            <p class="text-gray-400">Actividades y reglas</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-300">
+                        Las actividades y reglas que definen cómo se recopila, almacena, 
+                        procesa y distribuye la información dentro de la organización.
+                    </p>
+                </div>
+
+                <div class="bg-gray-800 rounded-2xl p-8 border border-pink-500 hover:border-pink-400 transition-all duration-300" data-aos="fade-up" data-aos-delay="600">
+                    <div class="flex items-center mb-6">
+                        <div class="w-16 h-16 bg-pink-500 rounded-full flex items-center justify-center mr-4">
+                            <i class="fas fa-network-wired text-2xl text-white"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-pink-400">Redes de Comunicación</h3>
+                            <p class="text-gray-400">Medios de flujo de información</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-300">
+                        Los medios que permiten el flujo de información dentro y fuera de la organización, 
+                        conectando todos los componentes del sistema.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Design Process Section -->
+            <div class="bg-gradient-to-r from-gray-800 to-gray-900 rounded-2xl p-12 border border-gray-700" data-aos="zoom-in">
+                <h3 class="text-3xl font-bold text-center text-white mb-8">Proceso de Diseño del Sistema</h3>
+                <p class="text-xl text-gray-300 text-center mb-12 max-w-4xl mx-auto">
+                    El diseño de un sistema de información consiste en planificar cómo se van a integrar 
+                    estos elementos para resolver una necesidad específica.
+                </p>
+                
+                <div class="grid lg:grid-cols-2 gap-12">
+                    <div>
+                        <h4 class="text-2xl font-bold text-blue-400 mb-6">En esta fase se determinan:</h4>
+                        <div class="space-y-4">
+                            <div class="flex items-start space-x-4 p-4 bg-gray-700 rounded-lg">
+                                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-cube text-white text-sm"></i>
+                                </div>
+                                <div>
+                                    <h5 class="font-bold text-white">Arquitectura de software</h5>
+                                    <p class="text-gray-300 text-sm">Modularidad, interfaces y seguridad del sistema</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start space-x-4 p-4 bg-gray-700 rounded-lg">
+                                <div class="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-server text-white text-sm"></i>
+                                </div>
+                                <div>
+                                    <h5 class="font-bold text-white">Arquitectura de hardware</h5>
+                                    <p class="text-gray-300 text-sm">Servidores, almacenamiento, infraestructura en la nube</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start space-x-4 p-4 bg-gray-700 rounded-lg">
+                                <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-route text-white text-sm"></i>
+                                </div>
+                                <div>
+                                    <h5 class="font-bold text-white">Flujos de información</h5>
+                                    <p class="text-gray-300 text-sm">Los procesos operativos y flujo de datos</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start space-x-4 p-4 bg-gray-700 rounded-lg">
+                                <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center flex-shrink-0">
+                                    <i class="fas fa-desktop text-white text-sm"></i>
+                                </div>
+                                <div>
+                                    <h5 class="font-bold text-white">Interfaz de usuario</h5>
+                                    <p class="text-gray-300 text-sm">La experiencia de uso y diseño de interfaces</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-center">
+                        <div class="bg-gray-700 rounded-2xl p-8 text-center">
+                            <div class="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <i class="fas fa-bullseye text-3xl text-white"></i>
+                            </div>
+                            <h4 class="text-2xl font-bold text-white mb-4">Objetivo del Diseño</h4>
+                            <p class="text-gray-300 leading-relaxed">
+                                Lograr que el sistema sea <strong class="text-blue-400">funcional</strong>, 
+                                <strong class="text-green-400">seguro</strong>, 
+                                <strong class="text-purple-400">escalable</strong> y 
+                                <strong class="text-orange-400">fácil de mantener</strong>.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Metodologías Section -->
+    <!-- Sección Metodologías y DevOps eliminada por solicitud del usuario -->
+
+            <!-- Cards de Metodologías Ágiles, DevOps y Control de Calidad eliminados por solicitud del usuario -->
+
+            <!-- DevOps Pipeline Visualization -->
+            <!-- Visualización Pipeline de DevOps eliminada por solicitud del usuario -->
+        </div>
+    </section>
+
+    <!-- Ciclo de Vida Section -->
+    <section id="ciclo-vida" class="relative py-32 bg-gradient-to-b from-gray-900 to-black">
+        <div class="absolute inset-0 neural-network opacity-20"></div>
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-20" data-aos="fade-up">
+                <h2 class="text-5xl lg:text-6xl font-black mb-6">
+                    <span class="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                        Ciclo de Vida del Sistema de Información
+                    </span>
+                </h2>
+                <p class="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+                    El ciclo de vida de un sistema de información son las diferentes etapas 
+                    que atraviesa desde su concepción hasta su retirada.
+                </p>
+            </div>
+
+            <!-- Ciclo de Vida Diagram -->
+            <div class="grid lg:grid-cols-2 gap-16 items-center mb-20">
+                <div data-aos="fade-right">
+                    <div class="bg-gray-800 rounded-2xl p-8 border border-gray-700">
+                        <h3 class="text-2xl font-bold text-center text-white mb-8">Diagrama del Ciclo de Vida</h3>
+                        <div class="w-full h-96 bg-gray-900 rounded-xl flex items-center justify-center">
+                            <img src="ciclo-vida-diagram.svg" alt="Diagrama del Ciclo de Vida del Sistema de Información" class="w-full h-full object-contain rounded-xl"/>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-6" data-aos="fade-left">
+                    <h3 class="text-3xl font-bold text-white mb-6">Las 8 Fases del Ciclo de Vida</h3>
+                    <div class="space-y-4">
+                        <div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-6">
+                            <h4 class="text-xl font-bold text-white mb-2">1. Planificación</h4>
+                            <p class="text-blue-100">Se identifican las necesidades y se define el alcance del proyecto</p>
+                        </div>
+                        <div class="bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl p-6">
+                            <h4 class="text-xl font-bold text-white mb-2">2. Análisis</h4>
+                            <p class="text-purple-100">Se estudian los requisitos del sistema en detalle</p>
+                        </div>
+                        <div class="bg-gradient-to-r from-green-600 to-green-700 rounded-xl p-6">
+                            <h4 class="text-xl font-bold text-white mb-2">3. Diseño</h4>
+                            <p class="text-green-100">Se define la arquitectura y estructura del sistema</p>
+                        </div>
+                        <div class="bg-gradient-to-r from-orange-600 to-orange-700 rounded-xl p-6">
+                            <h4 class="text-xl font-bold text-white mb-2">4. Desarrollo</h4>
+                            <p class="text-orange-100">Se codifica y construye el sistema según las especificaciones</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Phases Timeline -->
+            <div class="relative">
+                <div class="absolute left-1/2 transform -translate-x-1/2 w-1 h-full bg-gradient-to-b from-blue-500 to-purple-500"></div>
+                
+                <div class="space-y-16">
+                    <!-- Phase 1: Planificación -->
+                    <div class="relative flex items-center" data-aos="fade-right">
+                        <div class="w-1/2 pr-8">
+                            <div class="bg-gray-800 rounded-2xl p-8 border border-blue-500">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center mr-4">
+                                        <i class="fas fa-lightbulb text-white"></i>
+                                    </div>
+                                    <h3 class="text-2xl font-bold text-blue-400">1. Planificación</h3>
+                                </div>
+                                <p class="text-gray-300 mb-4">
+                                    Se identifican las necesidades y se define el alcance del proyecto. 
+                                    Es la fase inicial donde se establece qué se va a hacer y por qué.
+                                </p>
+                                <div class="space-y-2">
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-blue-400 mr-2"></i>
+                                        Identificación de necesidades
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-blue-400 mr-2"></i>
+                                        Definición del alcance
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-blue-400 mr-2"></i>
+                                        Estimación de recursos
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="absolute left-1/2 transform -translate-x-1/2 w-8 h-8 bg-blue-500 rounded-full border-4 border-gray-900 animate-cyber-pulse"></div>
+                        <div class="w-1/2"></div>
+                    </div>
+
+                    <!-- Phase 2: Análisis -->
+                    <div class="relative flex items-center" data-aos="fade-left">
+                        <div class="w-1/2"></div>
+                        <div class="absolute left-1/2 transform -translate-x-1/2 w-8 h-8 bg-purple-500 rounded-full border-4 border-gray-900 animate-cyber-pulse" style="animation-delay: 0.5s;"></div>
+                        <div class="w-1/2 pl-8">
+                            <div class="bg-gray-800 rounded-2xl p-8 border border-purple-500">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center mr-4">
+                                        <i class="fas fa-search text-white"></i>
+                                    </div>
+                                    <h3 class="text-2xl font-bold text-purple-400">2. Análisis</h3>
+                                </div>
+                                <p class="text-gray-300 mb-4">
+                                    Se estudian los requisitos del sistema en detalle. Se analiza qué debe hacer 
+                                    el sistema y cómo debe comportarse.
+                                </p>
+                                <div class="space-y-2">
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-purple-400 mr-2"></i>
+                                        Análisis de requisitos funcionales
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-purple-400 mr-2"></i>
+                                        Análisis de requisitos no funcionales
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-purple-400 mr-2"></i>
+                                        Modelado de procesos de negocio
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Phase 3: Diseño -->
+                    <div class="relative flex items-center" data-aos="fade-right">
+                        <div class="w-1/2 pr-8">
+                            <div class="bg-gray-800 rounded-2xl p-8 border border-green-500">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mr-4">
+                                        <i class="fas fa-drafting-compass text-white"></i>
+                                    </div>
+                                    <h3 class="text-2xl font-bold text-green-400">3. Diseño</h3>
+                                </div>
+                                <p class="text-gray-300 mb-4">
+                                    Se define la arquitectura y estructura del sistema. Se especifica cómo 
+                                    se va a construir para cumplir con los requisitos.
+                                </p>
+                                <div class="space-y-2">
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-green-400 mr-2"></i>
+                                        Diseño de la arquitectura del sistema
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-green-400 mr-2"></i>
+                                        Diseño de la base de datos
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-green-400 mr-2"></i>
+                                        Diseño de interfaces de usuario
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="absolute left-1/2 transform -translate-x-1/2 w-8 h-8 bg-green-500 rounded-full border-4 border-gray-900 animate-cyber-pulse" style="animation-delay: 1s;"></div>
+                        <div class="w-1/2"></div>
+                    </div>
+
+                    <!-- Phase 4: Desarrollo -->
+                    <div class="relative flex items-center" data-aos="fade-left">
+                        <div class="w-1/2"></div>
+                        <div class="absolute left-1/2 transform -translate-x-1/2 w-8 h-8 bg-orange-500 rounded-full border-4 border-gray-900 animate-cyber-pulse" style="animation-delay: 1.5s;"></div>
+                        <div class="w-1/2 pl-8">
+                            <div class="bg-gray-800 rounded-2xl p-8 border border-orange-500">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-12 h-12 bg-orange-500 rounded-full flex items-center justify-center mr-4">
+                                        <i class="fas fa-hammer text-white"></i>
+                                    </div>
+                                    <h3 class="text-2xl font-bold text-orange-400">4. Desarrollo</h3>
+                                </div>
+                                <p class="text-gray-300 mb-4">
+                                    Se codifica y construye el sistema según las especificaciones del diseño. 
+                                    Es donde se crea el software real.
+                                </p>
+                                <div class="space-y-2">
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-orange-400 mr-2"></i>
+                                        Programación del código fuente
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-orange-400 mr-2"></i>
+                                        Creación de bases de datos
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-orange-400 mr-2"></i>
+                                        Integración de componentes
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Phase 5: Pruebas -->
+                    <div class="relative flex items-center" data-aos="fade-right">
+                        <div class="w-1/2 pr-8">
+                            <div class="bg-gray-800 rounded-2xl p-8 border border-red-500">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mr-4">
+                                        <i class="fas fa-vial text-white"></i>
+                                    </div>
+                                    <h3 class="text-2xl font-bold text-red-400">5. Pruebas</h3>
+                                </div>
+                                <p class="text-gray-300 mb-4">
+                                    Se verifica que el sistema funcione correctamente y cumpla con todos 
+                                    los requisitos especificados.
+                                </p>
+                                <div class="space-y-2">
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-red-400 mr-2"></i>
+                                        Pruebas de funcionalidad
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-red-400 mr-2"></i>
+                                        Pruebas de rendimiento
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-red-400 mr-2"></i>
+                                        Pruebas de seguridad
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="absolute left-1/2 transform -translate-x-1/2 w-8 h-8 bg-red-500 rounded-full border-4 border-gray-900 animate-cyber-pulse" style="animation-delay: 2s;"></div>
+                        <div class="w-1/2"></div>
+                    </div>
+
+                    <!-- Phase 6: Implementación -->
+                    <div class="relative flex items-center" data-aos="fade-left">
+                        <div class="w-1/2"></div>
+                        <div class="absolute left-1/2 transform -translate-x-1/2 w-8 h-8 bg-cyan-500 rounded-full border-4 border-gray-900 animate-cyber-pulse" style="animation-delay: 2.5s;"></div>
+                        <div class="w-1/2 pl-8">
+                            <div class="bg-gray-800 rounded-2xl p-8 border border-cyan-500">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-12 h-12 bg-cyan-500 rounded-full flex items-center justify-center mr-4">
+                                        <i class="fas fa-rocket text-white"></i>
+                                    </div>
+                                    <h3 class="text-2xl font-bold text-cyan-400">6. Implementación</h3>
+                                </div>
+                                <p class="text-gray-300 mb-4">
+                                    Se pone en funcionamiento en el entorno real. El sistema se instala 
+                                    y comienza a operar para los usuarios finales.
+                                </p>
+                                <div class="space-y-2">
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-cyan-400 mr-2"></i>
+                                        Instalación del sistema
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-cyan-400 mr-2"></i>
+                                        Migración de datos
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-cyan-400 mr-2"></i>
+                                        Capacitación de usuarios
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Phase 7: Mantenimiento -->
+                    <div class="relative flex items-center" data-aos="fade-right">
+                        <div class="w-1/2 pr-8">
+                            <div class="bg-gray-800 rounded-2xl p-8 border border-pink-500">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-12 h-12 bg-pink-500 rounded-full flex items-center justify-center mr-4">
+                                        <i class="fas fa-tools text-white"></i>
+                                    </div>
+                                    <h3 class="text-2xl font-bold text-pink-400">7. Mantenimiento</h3>
+                                </div>
+                                <p class="text-gray-300 mb-4">
+                                    Se realizan actualizaciones y correcciones necesarias para mantener 
+                                    el sistema funcionando correctamente a lo largo del tiempo.
+                                </p>
+                                <div class="space-y-2">
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-pink-400 mr-2"></i>
+                                        Corrección de errores
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-pink-400 mr-2"></i>
+                                        Actualizaciones del sistema
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-pink-400 mr-2"></i>
+                                        Mejoras y adaptaciones
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="absolute left-1/2 transform -translate-x-1/2 w-8 h-8 bg-pink-500 rounded-full border-4 border-gray-900 animate-cyber-pulse" style="animation-delay: 3s;"></div>
+                        <div class="w-1/2"></div>
+                    </div>
+
+                    <!-- Phase 8: Retirada -->
+                    <div class="relative flex items-center" data-aos="fade-left">
+                        <div class="w-1/2"></div>
+                        <div class="absolute left-1/2 transform -translate-x-1/2 w-8 h-8 bg-gray-500 rounded-full border-4 border-gray-900 animate-cyber-pulse" style="animation-delay: 3.5s;"></div>
+                        <div class="w-1/2 pl-8">
+                            <div class="bg-gray-800 rounded-2xl p-8 border border-gray-500">
+                                <div class="flex items-center mb-4">
+                                    <div class="w-12 h-12 bg-gray-500 rounded-full flex items-center justify-center mr-4">
+                                        <i class="fas fa-power-off text-white"></i>
+                                    </div>
+                                    <h3 class="text-2xl font-bold text-gray-400">8. Retirada</h3>
+                                </div>
+                                <p class="text-gray-300 mb-4">
+                                    Se da de baja el sistema cuando ya no es útil o ha sido reemplazado 
+                                    por una nueva solución más moderna.
+                                </p>
+                                <div class="space-y-2">
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-gray-400 mr-2"></i>
+                                        Planificación del retiro
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-gray-400 mr-2"></i>
+                                        Migración a nuevo sistema
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-400">
+                                        <i class="fas fa-check text-gray-400 mr-2"></i>
+                                        Archivo de datos históricos
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Section -->
+            <div class="mt-20 bg-gray-800 rounded-2xl p-8 border border-gray-700" data-aos="fade-up">
+                <h3 class="text-2xl font-bold text-center text-white mb-8">Resumen del Ciclo de Vida</h3>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-calendar-alt text-2xl text-white"></i>
+                        </div>
+                        <div class="text-3xl font-bold text-blue-400 mb-2">8</div>
+                        <div class="text-gray-400">Fases Totales</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-play-circle text-2xl text-white"></i>
+                        </div>
+                        <div class="text-3xl font-bold text-green-400 mb-2">4</div>
+                        <div class="text-gray-400">Fases de Desarrollo</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-cogs text-2xl text-white"></i>
+                        </div>
+                        <div class="text-3xl font-bold text-purple-400 mb-2">4</div>
+                        <div class="text-gray-400">Fases de Operación</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="w-20 h-20 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-sync-alt text-2xl text-white"></i>
+                        </div>
+                        <div class="text-3xl font-bold text-orange-400 mb-2">∞</div>
+                        <div class="text-gray-400">Proceso Continuo</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tecnologías Section -->
+    <section id="tecnologias" class="relative py-32 bg-black">
+        <div class="absolute inset-0 cyber-grid opacity-30"></div>
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-20" data-aos="fade-up">
+                <h2 class="text-5xl lg:text-6xl font-black mb-6">
+                    <span class="bg-gradient-to-r from-green-400 via-blue-500 to-purple-500 bg-clip-text text-transparent">
+                        Stack Tecnológico
+                    </span>
+                </h2>
+                <p class="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+                    Tecnologías de vanguardia para el desarrollo de sistemas empresariales escalables, 
+                    seguros y de alto rendimiento en entornos cloud-native.
+                </p>
+            </div>
+
+            <!-- Tech Stack Grid -->
+            <div class="grid lg:grid-cols-4 md:grid-cols-2 gap-8 mb-16">
+                <!-- Tecnologías Frontend -->
+                <div class="bg-gradient-to-b from-gray-800 to-gray-900 rounded-2xl p-8 border border-blue-500 hover:border-blue-400 transition-all duration-300 transform hover:scale-105" data-aos="fade-up" data-aos-delay="100">
+                    <div class="text-center mb-6">
+                        <div class="w-20 h-20 bg-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fab fa-react text-3xl text-white"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-blue-400">Frontend</h3>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="bg-gray-700 rounded-lg p-3 flex items-center">
+                            <i class="fab fa-react text-blue-400 mr-3"></i>
+                            <span class="text-white">React 18 + TypeScript</span>
+                        </div>
+                        <div class="bg-gray-700 rounded-lg p-3 flex items-center">
+                            <i class="fab fa-angular text-red-400 mr-3"></i>
+                            <span class="text-white">Angular 17</span>
+                        </div>
+                        <div class="bg-gray-700 rounded-lg p-3 flex items-center">
+                            <i class="fab fa-vuejs text-green-400 mr-3"></i>
+                            <span class="text-white">Vue.js 3</span>
+                        </div>
+                        <div class="bg-gray-700 rounded-lg p-3 flex items-center">
+                            <i class="fas fa-mobile-alt text-purple-400 mr-3"></i>
+                            <span class="text-white">React Native</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tecnologías Backend -->
+                <div class="bg-gradient-to-b from-gray-800 to-gray-900 rounded-2xl p-8 border border-green-500 hover:border-green-400 transition-all duration-300 transform hover:scale-105" data-aos="fade-up" data-aos-delay="200">
+                    <div class="text-center mb-6">
+                        <div class="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fab fa-node-js text-3xl text-white"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-green-400">Backend</h3>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="bg-gray-700 rounded-lg p-3 flex items-center">
+                            <i class="fab fa-node-js text-green-400 mr-3"></i>
+                            <span class="text-white">Node.js + Express</span>
+                        </div>
+                        <div class="bg-gray-700 rounded-lg p-3 flex items-center">
+                            <i class="fab fa-java text-orange-400 mr-3"></i>
+                            <span class="text-white">Java Spring Boot</span>
+                        </div>
+                        <div class="bg-gray-700 rounded-lg p-3 flex items-center">
+                            <i class="fab fa-python text-blue-400 mr-3"></i>
+                            <span class="text-white">Python Django/FastAPI</span>
+                        </div>
+                        <div class="bg-gray-700 rounded-lg p-3 flex items-center">
+                            <i class="fab fa-microsoft text-blue-400 mr-3"></i>
+                            <span class="text-white">.NET Core</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bases de Datos -->
+                <div class="bg-gradient-to-b from-gray-800 to-gray-900 rounded-2xl p-8 border border-purple-500 hover:border-purple-400 transition-all duration-300 transform hover:scale-105" data-aos="fade-up" data-aos-delay="300">
+                    <div class="text-center mb-6">
+                        <div class="w-20 h-20 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-database text-3xl text-white"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-purple-400">Bases de Datos</h3>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="bg-gray-700 rounded-lg p-3 flex items-center">
+                            <i class="fas fa-database text-blue-400 mr-3"></i>
+                            <span class="text-white">PostgreSQL</span>
+                        </div>
+                        <div class="bg-gray-700 rounded-lg p-3 flex items-center">
+                            <i class="fas fa-leaf text-green-400 mr-3"></i>
+                            <span class="text-white">MongoDB</span>
+                        </div>
+                        <div class="bg-gray-700 rounded-lg p-3 flex items-center">
+                            <i class="fas fa-memory text-red-400 mr-3"></i>
+                            <span class="text-white">Redis Cache</span>
+                        </div>
+                        <div class="bg-gray-700 rounded-lg p-3 flex items-center">
+                            <i class="fas fa-chart-line text-orange-400 mr-3"></i>
+                            <span class="text-white">ElasticSearch</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Nube y DevOps -->
+                <div class="bg-gradient-to-b from-gray-800 to-gray-900 rounded-2xl p-8 border border-orange-500 hover:border-orange-400 transition-all duration-300 transform hover:scale-105" data-aos="fade-up" data-aos-delay="400">
+                    <div class="text-center mb-6">
+                        <div class="w-20 h-20 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fab fa-aws text-3xl text-white"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-orange-400">Nube y DevOps</h3>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="bg-gray-700 rounded-lg p-3 flex items-center">
+                            <i class="fab fa-aws text-orange-400 mr-3"></i>
+                            <span class="text-white">AWS/Azure/GCP</span>
+                        </div>
+                        <div class="bg-gray-700 rounded-lg p-3 flex items-center">
+                            <i class="fab fa-docker text-blue-400 mr-3"></i>
+                            <span class="text-white">Docker + Kubernetes</span>
+                        </div>
+                        <div class="bg-gray-700 rounded-lg p-3 flex items-center">
+                            <i class="fab fa-jenkins text-red-400 mr-3"></i>
+                            <span class="text-white">Jenkins/GitHub Actions</span>
+                        </div>
+                        <div class="bg-gray-700 rounded-lg p-3 flex items-center">
+                            <i class="fas fa-code-branch text-purple-400 mr-3"></i>
+                            <span class="text-white">Terraform + Ansible</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Métricas de Rendimiento -->
+
+
+            <!-- Patrones Arquitectónicos con Diagramas Interactivos -->
+            <div class="mb-20">
+                <h3 class="text-3xl font-bold text-center text-white mb-12">Patrones Arquitectónicos Interactivos</h3>
+                
+                <!-- Selector de Arquitecturas -->
+                <div class="flex flex-wrap justify-center gap-4 mb-12">
+                    <button class="architecture-btn active" data-arch="monolith">🏢 Arquitectura Monolítica</button>
+                    <button class="architecture-btn" data-arch="microservices">🔗 Microservicios</button>
+                    <button class="architecture-btn" data-arch="layered">📚 Arquitectura en Capas</button>
+                    <button class="architecture-btn" data-arch="mvc">🎯 Patrón MVC</button>
+                    <button class="architecture-btn" data-arch="event-driven">⚡ Orientada a Eventos</button>
+                    <button class="architecture-btn" data-arch="serverless">☁️ Serverless</button>
+                </div>
+
+                <!-- Contenedor de Diagramas -->
+                <div id="diagram-container" class="bg-gray-800 rounded-2xl p-8 border border-gray-700 min-h-96">
+                    
+                    <!-- Diagrama Arquitectura Monolítica -->
+                    <div id="monolith-diagram" class="architecture-diagram">
+                        <h4 class="text-xl font-bold text-white mb-6 text-center">Arquitectura Monolítica</h4>
+                        <div class="flex flex-col items-center space-y-6">
+                            <!-- Usuario -->
+                            <div class="diagram-node" data-info="Usuario final que interactúa con la aplicación">
+                                <div class="node-circle bg-blue-500 w-16 h-16">
+                                    <i class="fas fa-user text-white text-xl"></i>
+                                </div>
+                                <span class="node-label">Usuario</span>
+                            </div>
+                            
+                            <!-- Flecha -->
+                            <div class="text-3xl text-blue-400">↓</div>
+                            
+                            <!-- Aplicación Monolítica -->
+                            <div class="relative bg-gray-700 rounded-lg p-8 border-2 border-blue-500 max-w-lg">
+                                <h5 class="text-lg font-bold text-white text-center mb-4">Aplicación Monolítica</h5>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="bg-green-600 p-3 rounded text-white text-center text-sm">UI Layer</div>
+                                    <div class="bg-yellow-600 p-3 rounded text-white text-center text-sm">Business Logic</div>
+                                    <div class="bg-red-600 p-3 rounded text-white text-center text-sm">Data Access</div>
+                                    <div class="bg-purple-600 p-3 rounded text-white text-center text-sm">Security</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Flecha -->
+                            <div class="text-3xl text-blue-400">↓</div>
+                            
+                            <!-- Base de Datos -->
+                            <div class="diagram-node" data-info="Base de datos única compartida">
+                                <div class="node-circle bg-green-500 w-16 h-16">
+                                    <i class="fas fa-database text-white text-xl"></i>
+                                </div>
+                                <span class="node-label">Base de Datos</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Características -->
+                        <div class="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-green-400 text-2xl mb-2">✓</div>
+                                <div class="text-sm text-white">Fácil desarrollo</div>
+                            </div>
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-red-400 text-2xl mb-2">✗</div>
+                                <div class="text-sm text-white">Escalabilidad limitada</div>
+                            </div>
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-green-400 text-2xl mb-2">✓</div>
+                                <div class="text-sm text-white">Testing simple</div>
+                            </div>
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-red-400 text-2xl mb-2">✗</div>
+                                <div class="text-sm text-white">Un solo punto de falla</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Diagrama Microservicios -->
+                    <div id="microservices-diagram" class="architecture-diagram hidden">
+                        <h4 class="text-xl font-bold text-white mb-6 text-center">Arquitectura de Microservicios</h4>
+                        <div class="microservices-container relative h-96">
+                            <!-- API Gateway -->
+                            <div class="absolute top-4 left-1/2 transform -translate-x-1/2 diagram-node" data-info="Punto de entrada único para todas las solicitudes">
+                                <div class="node-circle bg-purple-500 w-16 h-16">
+                                    <i class="fas fa-shield-alt text-white text-xl"></i>
+                                </div>
+                                <span class="node-label">API Gateway</span>
+                            </div>
+                            
+                            <!-- Microservicios -->
+                            <div class="absolute top-24 left-8 diagram-node" data-info="Servicio de autenticación y autorización">
+                                <div class="node-circle bg-blue-500">
+                                    <i class="fas fa-lock text-white"></i>
+                                </div>
+                                <span class="node-label">Auth Service</span>
+                            </div>
+                            
+                            <div class="absolute top-24 left-1/4 diagram-node" data-info="Gestión de usuarios y perfiles">
+                                <div class="node-circle bg-green-500">
+                                    <i class="fas fa-users text-white"></i>
+                                </div>
+                                <span class="node-label">User Service</span>
+                            </div>
+                            
+                            <div class="absolute top-24 right-1/4 diagram-node" data-info="Procesamiento de órdenes">
+                                <div class="node-circle bg-orange-500">
+                                    <i class="fas fa-shopping-cart text-white"></i>
+                                </div>
+                                <span class="node-label">Order Service</span>
+                            </div>
+                            
+                            <div class="absolute top-24 right-8 diagram-node" data-info="Procesamiento de pagos">
+                                <div class="node-circle bg-red-500">
+                                    <i class="fas fa-credit-card text-white"></i>
+                                </div>
+                                <span class="node-label">Payment Service</span>
+                            </div>
+                            
+                            <!-- Bases de datos individuales -->
+                            <div class="absolute bottom-8 left-8 diagram-node">
+                                <div class="node-circle bg-gray-500">
+                                    <i class="fas fa-database text-white"></i>
+                                </div>
+                                <span class="node-label">Auth DB</span>
+                            </div>
+                            
+                            <div class="absolute bottom-8 left-1/4 diagram-node">
+                                <div class="node-circle bg-gray-500">
+                                    <i class="fas fa-database text-white"></i>
+                                </div>
+                                <span class="node-label">User DB</span>
+                            </div>
+                            
+                            <div class="absolute bottom-8 right-1/4 diagram-node">
+                                <div class="node-circle bg-gray-500">
+                                    <i class="fas fa-database text-white"></i>
+                                </div>
+                                <span class="node-label">Order DB</span>
+                            </div>
+                            
+                            <div class="absolute bottom-8 right-8 diagram-node">
+                                <div class="node-circle bg-gray-500">
+                                    <i class="fas fa-database text-white"></i>
+                                </div>
+                                <span class="node-label">Payment DB</span>
+                            </div>
+                            
+                            <!-- Líneas de conexión -->
+                            <svg class="absolute inset-0 w-full h-full pointer-events-none connection-lines">
+                                <line x1="50%" y1="15%" x2="15%" y2="30%" stroke="#8b5cf6" stroke-width="2"/>
+                                <line x1="50%" y1="15%" x2="35%" y2="30%" stroke="#8b5cf6" stroke-width="2"/>
+                                <line x1="50%" y1="15%" x2="65%" y2="30%" stroke="#8b5cf6" stroke-width="2"/>
+                                <line x1="50%" y1="15%" x2="85%" y2="30%" stroke="#8b5cf6" stroke-width="2"/>
+                                <line x1="15%" y1="40%" x2="15%" y2="70%" stroke="#6b7280" stroke-width="2"/>
+                                <line x1="35%" y1="40%" x2="35%" y2="70%" stroke="#6b7280" stroke-width="2"/>
+                                <line x1="65%" y1="40%" x2="65%" y2="70%" stroke="#6b7280" stroke-width="2"/>
+                                <line x1="85%" y1="40%" x2="85%" y2="70%" stroke="#6b7280" stroke-width="2"/>
+                            </svg>
+                        </div>
+                        
+                        <!-- Características -->
+                        <div class="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-green-400 text-2xl mb-2">✓</div>
+                                <div class="text-sm text-white">Alta escalabilidad</div>
+                            </div>
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-green-400 text-2xl mb-2">✓</div>
+                                <div class="text-sm text-white">Despliegue independiente</div>
+                            </div>
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-red-400 text-2xl mb-2">✗</div>
+                                <div class="text-sm text-white">Mayor complejidad</div>
+                            </div>
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-yellow-400 text-2xl mb-2">~</div>
+                                <div class="text-sm text-white">Gestión de red</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Diagrama Arquitectura en Capas -->
+                    <div id="layered-diagram" class="architecture-diagram hidden">
+                        <h4 class="text-xl font-bold text-white mb-6 text-center">Arquitectura en Capas (Layered)</h4>
+                        <div class="flex flex-col space-y-4 max-w-2xl mx-auto">
+                            <div class="layer bg-blue-600 p-4 rounded-lg text-white text-center border-2 border-blue-400">
+                                <div class="flex items-center justify-center space-x-2">
+                                    <i class="fas fa-desktop text-xl"></i>
+                                    <span class="font-bold">Capa de Presentación</span>
+                                </div>
+                                <p class="text-sm mt-2 opacity-90">Interfaz de usuario, vistas, controladores web</p>
+                            </div>
+                            
+                            <div class="flex justify-center">
+                                <div class="text-3xl text-blue-400">↓</div>
+                            </div>
+                            
+                            <div class="layer bg-green-600 p-4 rounded-lg text-white text-center border-2 border-green-400">
+                                <div class="flex items-center justify-center space-x-2">
+                                    <i class="fas fa-cogs text-xl"></i>
+                                    <span class="font-bold">Capa de Lógica de Negocio</span>
+                                </div>
+                                <p class="text-sm mt-2 opacity-90">Reglas de negocio, validaciones, procesos</p>
+                            </div>
+                            
+                            <div class="flex justify-center">
+                                <div class="text-3xl text-green-400">↓</div>
+                            </div>
+                            
+                            <div class="layer bg-orange-600 p-4 rounded-lg text-white text-center border-2 border-orange-400">
+                                <div class="flex items-center justify-center space-x-2">
+                                    <i class="fas fa-exchange-alt text-xl"></i>
+                                    <span class="font-bold">Capa de Acceso a Datos</span>
+                                </div>
+                                <p class="text-sm mt-2 opacity-90">Repositorios, ORM, consultas SQL</p>
+                            </div>
+                            
+                            <div class="flex justify-center">
+                                <div class="text-3xl text-orange-400">↓</div>
+                            </div>
+                            
+                            <div class="layer bg-purple-600 p-4 rounded-lg text-white text-center border-2 border-purple-400">
+                                <div class="flex items-center justify-center space-x-2">
+                                    <i class="fas fa-database text-xl"></i>
+                                    <span class="font-bold">Capa de Datos</span>
+                                </div>
+                                <p class="text-sm mt-2 opacity-90">Base de datos, archivos, servicios externos</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Características -->
+                        <div class="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-green-400 text-2xl mb-2">✓</div>
+                                <div class="text-sm text-white">Separación clara</div>
+                            </div>
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-green-400 text-2xl mb-2">✓</div>
+                                <div class="text-sm text-white">Fácil mantenimiento</div>
+                            </div>
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-yellow-400 text-2xl mb-2">~</div>
+                                <div class="text-sm text-white">Rendimiento medio</div>
+                            </div>
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-green-400 text-2xl mb-2">✓</div>
+                                <div class="text-sm text-white">Reutilizable</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Diagrama MVC -->
+                    <div id="mvc-diagram" class="architecture-diagram hidden">
+                        <h4 class="text-xl font-bold text-white mb-6 text-center">Patrón Modelo-Vista-Controlador (MVC)</h4>
+                        <div class="flex justify-center mb-6">
+                            <img src="image-1755660973881.png" alt="Ejemplo gráfico MVC" class="rounded-lg shadow-lg max-w-full h-auto" style="max-width:400px;">
+                        </div>
+                        <!-- Diagrama animado eliminado por solicitud del usuario -->
+                        
+                        <!-- Características -->
+                        <div class="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-green-400 text-2xl mb-2">✓</div>
+                                <div class="text-sm text-white">Separación de concerns</div>
+                            </div>
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-green-400 text-2xl mb-2">✓</div>
+                                <div class="text-sm text-white">Reutilización de código</div>
+                            </div>
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-green-400 text-2xl mb-2">✓</div>
+                                <div class="text-sm text-white">Testing independiente</div>
+                            </div>
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-green-400 text-2xl mb-2">✓</div>
+                                <div class="text-sm text-white">Desarrollo paralelo</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Diagrama Orientada a Eventos -->
+                    <div id="event-driven-diagram" class="architecture-diagram hidden">
+                        <h4 class="text-xl font-bold text-white mb-6 text-center">Arquitectura Orientada a Eventos</h4>
+                        <div class="relative h-80" id="event-driven-container">
+                            <!-- Productores de eventos -->
+                            <div class="absolute top-8 left-8 diagram-node producer">
+                                <div class="node-circle bg-blue-500">
+                                    <i class="fas fa-plus text-white"></i>
+                                </div>
+                                <span class="node-label">Crear Usuario</span>
+                            </div>
+                            
+                            <div class="absolute top-8 left-40 diagram-node producer">
+                                <div class="node-circle bg-green-500">
+                                    <i class="fas fa-shopping-bag text-white"></i>
+                                </div>
+                                <span class="node-label">Crear Pedido</span>
+                            </div>
+                            
+                            <!-- Event Bus Central -->
+                            <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 diagram-node event-bus">
+                                <div class="node-circle bg-yellow-500 w-24 h-24">
+                                    <i class="fas fa-exchange-alt text-white text-2xl"></i>
+                                </div>
+                                <span class="node-label">Event Bus</span>
+                            </div>
+                            
+                            <!-- Consumidores de eventos -->
+                            <div class="absolute bottom-8 right-8 diagram-node consumer">
+                                <div class="node-circle bg-purple-500">
+                                    <i class="fas fa-envelope text-white"></i>
+                                </div>
+                                <span class="node-label">Email Service</span>
+                            </div>
+                            
+                            <div class="absolute bottom-8 right-40 diagram-node consumer">
+                                <div class="node-circle bg-red-500">
+                                    <i class="fas fa-chart-bar text-white"></i>
+                                </div>
+                                <span class="node-label">Analytics</span>
+                            </div>
+                            
+                            <div class="absolute bottom-8 left-8 diagram-node consumer">
+                                <div class="node-circle bg-orange-500">
+                                    <i class="fas fa-warehouse text-white"></i>
+                                </div>
+                                <span class="node-label">Inventory</span>
+                            </div>
+                            
+                            <!-- Flujo de eventos (líneas dinámicas) -->
+                            <svg id="event-lines" class="absolute inset-0 w-full h-full pointer-events-none"></svg>
+                        </div>
+                        
+                        <!-- Características -->
+                        <div class="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-green-400 text-2xl mb-2">✓</div>
+                                <div class="text-sm text-white">Bajo acoplamiento</div>
+                            </div>
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-green-400 text-2xl mb-2">✓</div>
+                                <div class="text-sm text-white">Alta escalabilidad</div>
+                            </div>
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-green-400 text-2xl mb-2">✓</div>
+                                <div class="text-sm text-white">Tiempo real</div>
+                            </div>
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-yellow-400 text-2xl mb-2">~</div>
+                                <div class="text-sm text-white">Complejidad de debug</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Diagrama Serverless -->
+                    <div id="serverless-diagram" class="architecture-diagram hidden">
+                        <h4 class="text-xl font-bold text-white mb-6 text-center">Arquitectura Serverless</h4>
+                        <div class="relative h-[32rem] lg:h-[38rem]" id="serverless-container">
+                            <!-- Cliente -->
+                            <div class="absolute top-10 left-1/2 transform -translate-x-1/2 diagram-node srv-client">
+                                <div class="node-circle bg-blue-500 w-20 h-20">
+                                    <i class="fas fa-mobile-alt text-white text-2xl"></i>
+                                </div>
+                                <span class="node-label">Cliente</span>
+                            </div>
+                            
+                            <!-- API Gateway -->
+                            <div class="absolute top-40 left-1/2 transform -translate-x-1/2 diagram-node srv-gateway">
+                                <div class="node-circle bg-purple-500 w-20 h-20">
+                                    <i class="fas fa-door-open text-white text-2xl"></i>
+                                </div>
+                                <span class="node-label">API Gateway</span>
+                            </div>
+                            
+                            <!-- Funciones Lambda -->
+                            <div class="absolute top-64 left-24 diagram-node lambda-node srv-lambda">
+                                <div class="node-circle bg-orange-500 w-16 h-16">
+                                    <i class="fas fa-bolt text-white"></i>
+                                </div>
+                                <span class="node-label">Lambda 1</span>
+                            </div>
+                            
+                            <div class="absolute top-80 left-1/2 transform -translate-x-1/2 diagram-node lambda-node srv-lambda">
+                                <div class="node-circle bg-orange-500 w-16 h-16">
+                                    <i class="fas fa-bolt text-white"></i>
+                                </div>
+                                <span class="node-label">Lambda 2</span>
+                            </div>
+                            
+                            <div class="absolute top-64 right-24 diagram-node lambda-node srv-lambda">
+                                <div class="node-circle bg-orange-500 w-16 h-16">
+                                    <i class="fas fa-bolt text-white"></i>
+                                </div>
+                                <span class="node-label">Lambda 3</span>
+                            </div>
+                            
+                            <!-- Servicios Cloud -->
+                            <div class="absolute bottom-12 left-24 diagram-node srv-db">
+                                <div class="node-circle bg-green-500">
+                                    <i class="fas fa-database text-white"></i>
+                                </div>
+                                <span class="node-label">DynamoDB</span>
+                            </div>
+                            
+                            <div class="absolute bottom-12 left-1/2 transform -translate-x-1/2 diagram-node srv-storage">
+                                <div class="node-circle bg-red-500">
+                                    <i class="fas fa-hdd text-white"></i>
+                                </div>
+                                <span class="node-label">S3 Storage</span>
+                            </div>
+                            
+                            <div class="absolute bottom-12 right-24 diagram-node srv-messaging">
+                                <div class="node-circle bg-blue-500">
+                                    <i class="fas fa-bell text-white"></i>
+                                </div>
+                                <span class="node-label">SNS/SQS</span>
+                            </div>
+                            
+                            <!-- Conexiones dinámicas -->
+                            <svg id="serverless-lines" class="absolute inset-0 w-full h-full pointer-events-none" style="z-index:0"></svg>
+                        </div>
+                        
+                        <!-- Características -->
+                        <div class="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-green-400 text-2xl mb-2">✓</div>
+                                <div class="text-sm text-white">Sin gestión servidor</div>
+                            </div>
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-green-400 text-2xl mb-2">✓</div>
+                                <div class="text-sm text-white">Escalado automático</div>
+                            </div>
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-green-400 text-2xl mb-2">✓</div>
+                                <div class="text-sm text-white">Pago por uso</div>
+                            </div>
+                            <div class="bg-gray-700 rounded-lg p-4 text-center">
+                                <div class="text-red-400 text-2xl mb-2">✗</div>
+                                <div class="text-sm text-white">Cold start</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comparación de Arquitecturas -->
+                <div class="mt-12 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                        <h5 class="text-lg font-bold text-white mb-4 text-center">Análisis de Rendimiento</h5>
+                        <canvas id="performanceChart" width="300" height="200"></canvas>
+                    </div>
+                    
+                    <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                        <h5 class="text-lg font-bold text-white mb-4 text-center">Comparación de Características</h5>
+                        <canvas id="architectureChart" width="300" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+                </div>
+
+                <!-- CQRS + Event Sourcing Diagram -->
+                <div class="mb-16 bg-gray-800 rounded-2xl p-8 border border-gray-700" data-aos="fade-up" data-aos-delay="400">
+                    <div class="grid lg:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="text-2xl font-bold text-purple-400 mb-4">CQRS + Fuente de Eventos</h4>
+                            <p class="text-gray-300 mb-6">Separación de responsabilidades entre comandos y consultas con almacenamiento de eventos inmutables.</p>
+                            
+                            <!-- Interactive CQRS Diagram -->
+                            <div class="cqrs-diagram relative bg-gray-900 rounded-xl p-6 h-[480px] md:h-[520px]" id="cqrs-diagram">
+                                <!-- Command Side -->
+                                <div class="absolute left-4 top-4 text-sm text-blue-400 font-bold">COMANDO</div>
+                                
+                                <div class="diagram-node client absolute" style="top: 60px; left: 10%;">
+                                    <div class="node-circle bg-blue-500">
+                                        <i class="fas fa-user text-white"></i>
+                                    </div>
+                                    <span class="node-label">Cliente</span>
+                                </div>
+                                
+                                <div class="diagram-node command-handler absolute" style="top: 60px; left: 40%;">
+                                    <div class="node-circle bg-green-500">
+                                        <i class="fas fa-terminal text-white"></i>
+                                    </div>
+                                    <span class="node-label">Command Handler</span>
+                                </div>
+                                
+                                <div class="diagram-node event-store absolute" style="top: 60px; right: 10%;">
+                                    <div class="node-circle bg-purple-500">
+                                        <i class="fas fa-database text-white"></i>
+                                    </div>
+                                    <span class="node-label">Event Store</span>
+                                </div>
+                                
+                                <!-- Query Side -->
+                                <div class="absolute left-4 top-[240px] text-sm text-orange-400 font-bold">CONSULTA</div>
+                                
+                                <div class="diagram-node query-client absolute" style="top: 320px; left: 10%;">
+                                    <div class="node-circle bg-orange-500">
+                                        <i class="fas fa-search text-white"></i>
+                                    </div>
+                                    <span class="node-label">Query Client</span>
+                                </div>
+                                
+                                <div class="diagram-node read-model absolute" style="top: 320px; left: 40%;">
+                                    <div class="node-circle bg-cyan-500">
+                                        <i class="fas fa-eye text-white"></i>
+                                    </div>
+                                    <span class="node-label">Read Model</span>
+                                </div>
+                                
+                                <div class="diagram-node projection absolute" style="top: 320px; right: 10%;">
+                                    <div class="node-circle bg-red-500">
+                                        <i class="fas fa-filter text-white"></i>
+                                    </div>
+                                    <span class="node-label">Projection</span>
+                                </div>
+                                
+                                <!-- Connection Lines -->
+                                <svg class="connection-lines absolute inset-0 w-full h-full pointer-events-none" style="z-index:5;">
+                                    <defs>
+                                        <marker id="arrowhead-cqrs" markerWidth="8" markerHeight="8" refX="8" refY="4" orient="auto" markerUnits="strokeWidth">
+                                            <path d="M0,0 L8,4 L0,8 Z" fill="#fff" />
+                                        </marker>
+                                    </defs>
+                                    <!-- Commands: Client -> Handler -> Event Store -->
+                                    <line x1="15%" y1="25%" x2="40%" y2="25%" stroke="#22c55e" stroke-width="2"></line>
+                                    <line x1="45%" y1="25%" x2="85%" y2="25%" stroke="#a855f7" stroke-width="2"></line>
+                                    <!-- Events: Event Store -> Projection (down) -->
+                                    <line x1="85%" y1="30%" x2="85%" y2="70%" stroke="#f59e0b" stroke-width="2"></line>
+                                    <!-- Projections update Read Model -->
+                                    <line x1="80%" y1="75%" x2="45%" y2="75%" stroke="#06b6d4" stroke-width="2"></line>
+                                    <!-- Queries: Query Client -> Read Model -->
+                                    <line x1="15%" y1="75%" x2="40%" y2="75%" stroke="#fb923c" stroke-width="2"></line>
+                                </svg>
+                            </div>
+                            
+                            <div class="mt-4 flex justify-center">
+                                <button class="animate-cqrs-btn bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg transition-colors">
+                                    <i class="fas fa-sync mr-2"></i>Mostrar Flujo CQRS
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <!-- Performance Comparison Chart -->
+                            <h5 class="text-lg font-bold text-white mb-4">Comparación de Rendimiento</h5>
+                            <div class="bg-gray-700 rounded-xl p-4 mb-6">
+                                <canvas id="cqrsPerformanceChart" width="400" height="200"></canvas>
+                            </div>
+                            
+                            <!-- CQRS Benefits -->
+                            <h5 class="text-lg font-bold text-white mb-4">Ventajas de CQRS</h5>
+                            <div class="bg-gray-700 rounded-xl p-4">
+                                <canvas id="cqrsBenefitsChart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Architecture Comparison Dashboard -->
+                <div class="bg-gray-800 rounded-2xl p-8 border border-gray-700" data-aos="fade-up" data-aos-delay="600">
+                    <h4 class="text-2xl font-bold text-center text-white mb-8">Comparación de Patrones Arquitectónicos</h4>
+                    
+                    <div class="grid lg:grid-cols-2 gap-8">
+                        <!-- Complexity vs Performance Chart -->
+                        <div>
+                            <h5 class="text-lg font-bold text-white mb-4">Complejidad vs Rendimiento</h5>
+                            <div class="bg-gray-700 rounded-xl p-4">
+                                <canvas id="complexityChart" width="400" height="300"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Scalability Radar Chart -->
+                        <div>
+                            <h5 class="text-lg font-bold text-white mb-4">Análisis de Escalabilidad</h5>
+                            <div class="bg-gray-700 rounded-xl p-4">
+                                <canvas id="scalabilityRadarChart" width="400" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Interactive Architecture Selector -->
+                    <div class="mt-8">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="relative bg-black py-16 border-t border-gray-800">
+        <div class="absolute inset-0 bg-gradient-to-t from-gray-900 to-black opacity-50"></div>
+        <div class="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+            <div class="grid lg:grid-cols-4 gap-8 mb-12">
+                <div class="lg:col-span-2">
+                    <div class="flex items-center space-x-3 mb-6">
+                        <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-network-wired text-xl text-white"></i>
+                        </div>
+                        <span class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                            SysArchTech
+                        </span>
+                    </div>
+                    <p class="text-gray-300 mb-6 leading-relaxed">
+                        Plataforma especializada en arquitectura avanzada de sistemas de información, 
+                        metodologías ágiles y tecnologías enterprise para el desarrollo de soluciones escalables.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="w-10 h-10 bg-blue-600 hover:bg-blue-700 rounded-lg flex items-center justify-center transition-colors">
+                            <i class="fab fa-linkedin text-white"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-gray-700 hover:bg-gray-600 rounded-lg flex items-center justify-center transition-colors">
+                            <i class="fab fa-github text-white"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-blue-500 hover:bg-blue-600 rounded-lg flex items-center justify-center transition-colors">
+                            <i class="fab fa-twitter text-white"></i>
+                        </a>
+                    </div>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-bold mb-6">Navegación</h4>
+                    <ul class="space-y-3 text-gray-300">
+                        <li><a href="#inicio" class="hover:text-blue-400 transition-colors">Inicio</a></li>
+                        <li><a href="#arquitectura" class="hover:text-blue-400 transition-colors">Arquitectura</a></li>
+                        <li><a href="#metodologias" class="hover:text-blue-400 transition-colors">Metodologías</a></li>
+                        <li><a href="#ciclo-vida" class="hover:text-blue-400 transition-colors">Ciclo de Vida</a></li>
+                        <li><a href="#tecnologias" class="hover:text-blue-400 transition-colors">Tecnologías</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h4 class="text-white font-bold mb-6">Recursos</h4>
+                    <ul class="space-y-3 text-gray-300">
+                        <li><a href="#" class="hover:text-blue-400 transition-colors">Documentación</a></li>
+                        <li><a href="#" class="hover:text-blue-400 transition-colors">Referencia API</a></li>
+                        <li><a href="#" class="hover:text-blue-400 transition-colors">Casos de Estudio</a></li>
+                        <li><a href="#" class="hover:text-blue-400 transition-colors">Libros Blancos</a></li>
+                        <li><a href="#" class="hover:text-blue-400 transition-colors">Benchmarks</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <p class="text-gray-400 text-sm">
+                    © 2025 SysArchTech. Todos los derechos reservados. Diseñado para sistemas empresariales de alta disponibilidad.
+                </p>
+                <div class="flex space-x-6 mt-4 md:mt-0">
+                    <a href="#" class="text-gray-400 hover:text-blue-400 text-sm transition-colors">Privacidad</a>
+                    <a href="#" class="text-gray-400 hover:text-blue-400 text-sm transition-colors">Términos</a>
+                    <a href="#" class="text-gray-400 hover:text-blue-400 text-sm transition-colors">Cookies</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+<style>
+    /* Asegura que los nodos queden por encima de las líneas */
+    #serverless-container .diagram-node { z-index: 2; }
+    #serverless-lines .conn { filter: drop-shadow(0 0 2px rgba(0,0,0,0.6)); }
+    #serverless-lines .conn subtle { opacity: .9; }
+</style>
+<script>
+// Dibuja líneas dinámicas para el diagrama Serverless y las recalcula en resize/visibilidad
+(function(){
+    const NS = 'http://www.w3.org/2000/svg';
+
+    function getCenter(elem, containerRect){
+        if(!elem) return {x:0,y:0};
+        const r = elem.getBoundingClientRect();
+        return {
+            x: r.left - containerRect.left + r.width/2,
+            y: r.top  - containerRect.top  + r.height/2
+        };
+    }
+
+    function ensureMarker(svg, color){
+        let defs = svg.querySelector('defs');
+        if(!defs){
+            defs = document.createElementNS(NS,'defs');
+            svg.appendChild(defs);
+        }
+        const id = `arrow-${color.replace('#','')}`;
+        if(!svg.querySelector(`#${id}`)){
+            const marker = document.createElementNS(NS,'marker');
+            marker.setAttribute('id', id);
+            marker.setAttribute('viewBox', '0 0 10 10');
+            marker.setAttribute('refX', '10');
+            marker.setAttribute('refY', '5');
+            marker.setAttribute('markerWidth', '7');
+            marker.setAttribute('markerHeight', '7');
+            marker.setAttribute('orient', 'auto-start-reverse');
+            const path = document.createElementNS(NS,'path');
+            path.setAttribute('d','M 0 0 L 10 5 L 0 10 z');
+            path.setAttribute('fill', color);
+            marker.appendChild(path);
+            defs.appendChild(marker);
+        }
+        return `url(#${id})`;
+    }
+
+        function addCurve(svg, p1, p2, color='#94a3b8', width=2, arch='auto'){
+            const path = document.createElementNS(NS,'path');
+            const mx = (p1.x + p2.x) / 2;
+            let cy;
+            if(arch === 'up'){
+                cy = Math.min(p1.y, p2.y) - 50; // arco hacia arriba
+            } else if(arch === 'down'){
+                cy = Math.max(p1.y, p2.y) + 40; // arco hacia abajo
+            } else {
+                cy = (p1.y + p2.y) / 2 - 30; // sutil por defecto
+            }
+            const d = `M ${p1.x},${p1.y} Q ${mx},${cy} ${p2.x},${p2.y}`;
+            path.setAttribute('d', d);
+            path.setAttribute('fill','none');
+            path.setAttribute('stroke', color);
+            path.setAttribute('stroke-width', width);
+            path.setAttribute('stroke-linecap','round');
+            path.setAttribute('class','conn');
+            path.setAttribute('marker-end', ensureMarker(svg,color));
+            svg.appendChild(path);
+
+            // animación de trazo
+            try {
+                const len = path.getTotalLength();
+                path.style.strokeDasharray = String(len);
+                path.style.strokeDashoffset = String(len);
+                path.getBoundingClientRect();
+                path.style.transition = 'stroke-dashoffset 600ms ease-out';
+                requestAnimationFrame(() => { path.style.strokeDashoffset = '0'; });
+            } catch(_){}
+        }
+
+    function clearChildren(node){
+        while(node && node.firstChild) node.removeChild(node.firstChild);
+    }
+
+    function drawServerlessLines(){
+        const container = document.getElementById('serverless-container');
+        const svg = document.getElementById('serverless-lines');
+        if(!container || !svg) return;
+
+        // Si la sección está oculta (display:none), salimos para evitar cálculos con 0
+        const section = document.getElementById('serverless-diagram');
+        const isHidden = section && section.classList && section.classList.contains('hidden');
+        if(isHidden) return;
+
+        clearChildren(svg);
+
+        const rect = container.getBoundingClientRect();
+        svg.setAttribute('viewBox', `0 0 ${rect.width} ${rect.height}`);
+        svg.setAttribute('preserveAspectRatio','none');
+
+        const client   = container.querySelector('.srv-client');
+        const gateway  = container.querySelector('.srv-gateway');
+        const lambdas  = Array.from(container.querySelectorAll('.srv-lambda'));
+        const db       = container.querySelector('.srv-db');
+        const storage  = container.querySelector('.srv-storage');
+        const msg      = container.querySelector('.srv-messaging');
+
+        const pClient  = getCenter(client, rect);
+        const pGateway = getCenter(gateway, rect);
+        if(client && gateway){ addCurve(svg, pClient, pGateway, '#8b5cf6', 3, 'down'); }
+
+        // Gateway -> Lambdas
+        // Arcos hacia arriba para no cruzar con conexiones a servicios
+        lambdas.forEach(l => addCurve(svg, pGateway, getCenter(l, rect), '#f59e0b', 3, 'up'));
+
+        // Lambdas -> Servicios (emparejamos por orden visual: izq->DB, centro->S3, der->SNS/SQS)
+        const services = [db, storage, msg];
+        lambdas.forEach((l, idx) => {
+            const target = services[idx] || services[services.length-1];
+            if(target){ addCurve(svg, getCenter(l, rect), getCenter(target, rect), '#22d3ee', 2, 'down'); }
+        });
+    }
+
+    // Ejecutar cuando el documento esté listo
+    function ready(fn){
+        if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn); else fn();
+    }
+
+    ready(() => {
+        drawServerlessLines();
+        window.addEventListener('resize', () => { drawServerlessLines(); });
+
+        // Redibujar cuando la sección pase de hidden->visible
+        const section = document.getElementById('serverless-diagram');
+        if(section){
+            const obs = new MutationObserver(muts => {
+                for(const m of muts){
+                    if(m.type === 'attributes' && m.attributeName === 'class'){
+                        const visible = !section.classList.contains('hidden');
+                        if(visible){
+                            setTimeout(drawServerlessLines, 50);
+                        }
+                    }
+                }
+            });
+            obs.observe(section, { attributes: true, attributeFilter: ['class'] });
+        }
+    });
+})();
+</script>
+</html>
